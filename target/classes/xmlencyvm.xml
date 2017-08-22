@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:encryption="http://www.mulesoft.org/schema/mule/encryption" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/encryption http://www.mulesoft.org/schema/mule/encryption/current/mule-encryption.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <encryption:config name="Encryption" defaultEncrypter="XML_ENCRYPTER" doc:name="Encryption">
+        <encryption:xml-encrypter-config key="mahindracomviva1" xpath="/SADIK/ALI/CITY"/>
+    </encryption:config>
+    <vm:connector name="VM" validateConnections="true" doc:name="VM"/>
+    <flow name="xmlencyvmFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/xmlencryptionvm" allowedMethods="POST" doc:name="HTTP"/>
+        <string-to-byte-array-transformer doc:name="String to Byte Array"/>
+        <encryption:encrypt config-ref="Encryption" using="XML_ENCRYPTER" doc:name="Encryption">
+            <encryption:xml-encrypter key="mahindracomviva1" xpath="/SADIK/ALI/CITY" algorithm="AES_128"/>
+        </encryption:encrypt>
+        <vm:outbound-endpoint exchange-pattern="one-way" path="xmlencryptionvm" connector-ref="VM" doc:name="VM"/>
+        <set-payload value="This is Payload sent to Vm : #[payload]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="xmlencyvmFlow1">
+        <vm:inbound-endpoint exchange-pattern="one-way" path="xmlencryptionvm" connector-ref="VM" doc:name="VM"/>
+        <encryption:decrypt config-ref="Encryption" using="XML_ENCRYPTER" doc:name="Encryption">
+            <encryption:xml-encrypter key="mahindracomviva1" xpath="/SADIK/ALI/CITY" algorithm="AES_128"/>
+        </encryption:decrypt>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <logger message="This is final payload recieved  by VM #[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
